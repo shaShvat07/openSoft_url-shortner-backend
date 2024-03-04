@@ -21,7 +21,7 @@ app.use(bodyParser.json());
 // Routes
 app.use('/auth', authRoutes);
 app.use('/protected', protectedRoute);
-app.use('/api/url', urlRoutes);
+app.use('/api', urlRoutes);
 
 // Start the server
 const PORT = process.env.PORT || 3000;

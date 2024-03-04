@@ -106,7 +106,7 @@ async function getUserById(userId) {
         // Removed the validation since userId is a string
         const user = await User.findById(userId);
         if (!user) {
-            throw new Error('User not found');
+            return res.status(404).json({ error: 'User not found' });
         }
 
         return user;
@@ -116,9 +116,86 @@ async function getUserById(userId) {
     }
 }
 
+// B1 Delete url by id
+async function deleteUrlById(urlId, userId) {
+    try {
+        // Validate if the URL belongs to the user
+        const url = await Url.findOne({ _id: urlId, user: userId });
+        if (!url) {
+            throw new Error('URL not found or does not belong to the user');
+        }
+
+        // Delete the URL
+        await Url.findByIdAndDelete(urlId);
+
+        // Remove the URL reference from the user's URLs array
+        const user = await User.findById(userId);
+        user.urls.pull(urlId);
+        await user.save();
+
+        return url;
+    } catch (error) {
+        console.error("Error in deleteUrlById:", error);
+        throw error;
+    }
+}
+
+// B2 Cascade delete user by id
+async function cascadeDeleteUserById(userId) {
+    try {
+        // Validate if the user exists
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Delete all URLs associated with the user
+        for (const urlId of user.urls) {
+            await Url.findByIdAndDelete(urlId);
+        }
+
+        // Delete the user
+        await User.findByIdAndDelete(userId);
+
+        return user;
+    } catch (error) {
+        console.error("Error in cascadeDeleteUserById:", error);
+        throw error;
+    }
+}
+
+// B3 Update user by id
+async function updateUserById(userId, name, password) {
+    try {
+        // Validate if the user exists
+        const user = await User.findById(userId);
+        if (!user) {
+            throw new Error('User not found');
+        }
+
+        // Update user information
+        if (name) {
+            user.name = name;
+        }
+
+        if (password) {
+            user.password = password;
+        }
+
+        await user.save();
+
+        return user;
+    } catch (error) {
+        console.error("Error in updateUserById:", error);
+        throw error;
+    }
+}
 
 module.exports = {
     shortenUrl,
     getUrlById,
-    getUserById
+    getUserById,
+    deleteUrlById,
+    cascadeDeleteUserById,
+    updateUserById
 };
